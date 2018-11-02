@@ -14,9 +14,11 @@
     "material-design-icons-iconfont": "^3.0.3",
     "uuid": "^3.3.2",
     "vue": "^2.5.17",
+    "vue-offline": "^1.0.204",
     "vue-router": "^3.0.1",
     "vuetify": "^1.2.9",
-    "vuex": "^3.0.1"
+    "vuex": "^3.0.1",
+    "vuex-persist": "^2.0.0"
   },
   "devDependencies": {
     "@cypress/webpack-preprocessor": "^3.0.0",

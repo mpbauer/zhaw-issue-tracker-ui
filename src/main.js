@@ -24,7 +24,7 @@ Vue.config.productionTip = false;
 // Setup axios to be available globally through Vue
 Vue.axios = Vue.prototype.$http = axios.create({
   baseURL: 'https://309bxpg45b.execute-api.eu-west-1.amazonaws.com/latest/api'
-  // baseURL: 'http://localhost:30
+  // baseURL: 'http://localhost:3000/api'
 });
 
 new Vue({

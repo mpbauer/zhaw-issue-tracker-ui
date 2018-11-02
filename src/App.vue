@@ -1,7 +1,6 @@
 <template>
     <v-app id="inspire">
-        <v-navigation-drawer :clipped="$vuetify.breakpoint.lgAndUp" v-model="drawer" class="blue-grey darken-4" fixed
-                             app>
+        <v-navigation-drawer :clipped="$vuetify.breakpoint.lgAndUp" v-model="drawer" class="blue-grey darken-4" fixed app>
             <v-list dense>
                 <template v-for="item in items">
                     <v-layout v-if="item.heading" :key="item.heading" row align-center>
@@ -49,46 +48,11 @@
                             </v-list-tile-avatar>
 
                             <v-list-tile-content>
-                                <v-list-tile-title>Martin & Anastasios</v-list-tile-title>
+                                <v-list-tile-title>Martin & Anastassios</v-list-tile-title>
                                 <v-list-tile-sub-title>Students of ZHAW</v-list-tile-sub-title>
                             </v-list-tile-content>
-
-                            <v-list-tile-action>
-                                <v-btn
-                                        :class="fav ? 'red--text' : ''"
-                                        icon
-                                        @click="fav = !fav"
-                                >
-                                    <v-icon>explore</v-icon>
-                                </v-btn>
-                            </v-list-tile-action>
                         </v-list-tile>
                     </v-list>
-
-                    <v-divider></v-divider>
-
-                    <v-list>
-                        <v-list-tile>
-                            <v-list-tile-action>
-                                <v-switch v-model="message" color="purple"></v-switch>
-                            </v-list-tile-action>
-                            <v-list-tile-title>Enable messages</v-list-tile-title>
-                        </v-list-tile>
-
-                        <v-list-tile>
-                            <v-list-tile-action>
-                                <v-switch v-model="hints" color="purple"></v-switch>
-                            </v-list-tile-action>
-                            <v-list-tile-title>Enable hints</v-list-tile-title>
-                        </v-list-tile>
-                    </v-list>
-
-                    <v-card-actions>
-                        <v-spacer></v-spacer>
-
-                        <v-btn flat @click="menu = false">Cancel</v-btn>
-                        <v-btn color="primary" flat @click="menu = false">Save</v-btn>
-                    </v-card-actions>
                 </v-card>
             </v-menu>
         </v-toolbar>
@@ -99,13 +63,38 @@
                 </v-layout>
             </v-container>
         </v-content>
+        <div v-show="OnlineOnly">
+            <v-snackbar v-if="offlineBefore" v-model="snackbar"
+                        :top=true
+                        :multi-line="mode === 'multi-line'"
+                        :timeout="timeout"
+                        :vertical="mode === 'vertical'">
+                {{ reconnectText }}
+                <v-btn dark flat @click="snackbar = false">Close</v-btn>
+            </v-snackbar>
+        </div>
+        <div v-show="OfflineOnly">
+            <v-snackbar v-model="snackbar"
+                        :top=true
+                        :multi-line="mode === 'multi-line'"
+                        :timeout="timeout"
+                        :vertical="mode === 'vertical'">
+                {{ text }}
+                <v-btn dark flat @click="snackbar = false">Close</v-btn>
+            </v-snackbar>
+        </div>
     </v-app>
 </template>
 
 <script>
+import VueOfflineMixin from 'vue-offline/mixin';
+
 export default {
+  mixins: [VueOfflineMixin],
   data: () => {
-    return ({
+    return {
+      offlineBefore: false,
+      onlineState: navigator.onLine,
       fav: true,
       menu: false,
       message: false,
@@ -116,11 +105,30 @@ export default {
         { icon: 'dashboard', text: 'Dashboard', link: '/' },
         { icon: 'view_agenda', text: 'Projects', link: '/projects' },
         { icon: 'settings', text: 'Settings', link: '/settings' }
-      ]
-    });
+      ],
+      snackbar: true,
+      color: 'error',
+      mode: 'multi-line',
+      timeout: 6000,
+      text: 'Oops, it seems that you are currently offline!',
+      reconnectText: 'Seems like you are online again, welcome back!'
+    };
   },
   props: {
     source: String
+  },
+  created () {
+    this.$on('online', function () {
+      console.log('$on(online) method invoked');
+      this.snackbar = true;
+      this.onlineState = "I'm online now!";
+    });
+    this.$on('offline', function () {
+      console.log('$on(offline) method invoked');
+      this.offlineBefore = true;
+      this.snackbar = true;
+      this.onlineState = "I'm offline now!";
+    });
   }
 };
 </script>
