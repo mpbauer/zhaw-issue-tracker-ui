@@ -82,40 +82,40 @@ export default {
   },
   actions: {
     getAllProjects: function (context) {
-      Vue.axios.get('/projects')
+      return Vue.axios.get('/projects')
         .then(result => {
           return context.commit('updateProjects', result.data);
         })
         .catch(console.error);
     },
     getProject: function (context, projectId) {
-      Vue.axios.get(`/projects/${projectId}`)
+      return Vue.axios.get(`/projects/${projectId}`)
         .then(result => {
           return context.commit('updateProject', result.data);
         })
         .catch(console.error);
     },
     createProject: function (context, project) {
-      Vue.axios.post(`/projects`, project)
+      return Vue.axios.post(`/projects`, project)
         .then(result => {
           return context.commit('addProject', result.data);
         })
         .catch(console.error);
     },
     updateProject: function (context, project) {
-      Vue.axios.put(`/projects/${project.id}`, project)
+      return Vue.axios.put(`/projects/${project.id}`, project)
         .then(result => {
           return context.commit('updateProject', result.data);
         })
         .catch(console.error);
     },
     deleteProject: function (context, projectId) {
-      Vue.axios.delete(`/projects/${projectId}`)
+      return Vue.axios.delete(`/projects/${projectId}`)
         .then(() => context.commit('deleteProject', projectId))
         .catch(console.error);
     },
     getIssues: function (context, projectId) {
-      Vue.axios.get(`/projects/${projectId}/issues`)
+      return Vue.axios.get(`/projects/${projectId}/issues`)
         .then(result => {
           const issues = result.data;
           return context.commit('updateIssues', { projectId, issues });
@@ -123,7 +123,7 @@ export default {
         .catch(console.error);
     },
     getIssue: function (context, { projectId, issueId }) {
-      Vue.axios.get(`/projects/${projectId}/issues/${issueId}`)
+      return Vue.axios.get(`/projects/${projectId}/issues/${issueId}`)
         .then(result => {
           const issues = result.data;
           return context.commit('updateIssue', { projectId, issues });
@@ -131,7 +131,7 @@ export default {
         .catch(console.error);
     },
     createIssue: function (context, { projectId, issue }) {
-      Vue.axios.post(`/projects/${projectId}/issues`, issue)
+      return Vue.axios.post(`/projects/${projectId}/issues`, issue)
         .then(result => {
           const issue = result.data;
           return context.commit('addIssue', { projectId, issue });
@@ -139,7 +139,7 @@ export default {
         .catch(console.error);
     },
     updateIssue: function (context, { projectId, issue }) {
-      Vue.axios.put(`/projects/${projectId}/issues/${issue.id}`, issue)
+      return Vue.axios.put(`/projects/${projectId}/issues/${issue.id}`, issue)
         .then(result => {
           const issue = result.data;
           return context.commit('updateIssue', { projectId, issue });
@@ -147,7 +147,7 @@ export default {
         .catch(console.error);
     },
     deleteIssue: function (context, { projectId, issueId }) {
-      Vue.axios.delete(`/projects/${projectId}/issues/${issueId}`)
+      return Vue.axios.delete(`/projects/${projectId}/issues/${issueId}`)
         .then(() => context.commit('deleteIssue', { projectId, issueId }))
         .catch(console.error);
     }
