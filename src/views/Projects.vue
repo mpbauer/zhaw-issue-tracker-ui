@@ -66,6 +66,9 @@
                     </v-list-tile>
                 </v-list>
             </v-card>
+            <v-layout v-else-if="showLoadingSpinner" row justify-center>
+                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            </v-layout>
             <v-card v-else class="projects-card">
                 <div>
                     <v-alert :value="true" type="info">
@@ -145,6 +148,7 @@ export default Vue.extend({
       showCreateDialog: false,
       showDeleteDialog: false,
       showEditDialog: false,
+      showLoadingSpinner: true,
       selectedProject: null,
       valid: true,
       description: '',
@@ -161,7 +165,9 @@ export default Vue.extend({
   },
   mounted () {
     // TODO validate the result and show an error if the request was not successful
-    this.$store.dispatch('getAllProjects');
+    this.$store.dispatch('getAllProjects')
+        .then(() => this.showLoadingSpinner = false)
+        .catch(() => this.showLoadingSpinner = false);
   },
   methods: {
     closeCreateDialog () {
