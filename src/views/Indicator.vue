@@ -14,7 +14,7 @@ import {IndicatorType} from "./IndicatorType";
 
 export default Vue.extend({
     name: 'indicator',
-    props: [ 'show', 'message', 'type' ],
+    props: [ 'message', 'type' ],
     computed: {
         color: function () {
             switch (this.type) {
@@ -32,6 +32,9 @@ export default Vue.extend({
                     return "check_circle";
             }
         },
+        show: function () {
+            return !!this.message;
+        }
     }
 });
 

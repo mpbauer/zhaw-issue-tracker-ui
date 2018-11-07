@@ -30,7 +30,7 @@
                                         </v-flex>
                                     </v-layout>
                                 </v-container>
-                            <indicator :type="indicatorType.error" :show="createProjectError" :message="createProjectError"></indicator>
+                            <indicator :type="indicatorType.error" :message="createProjectError"></indicator>
                             </v-card-text>
                             <v-card-actions>
                                 <v-spacer></v-spacer>
@@ -80,9 +80,12 @@
         </v-flex>
 
         <v-layout row justify-center>
-            <v-dialog v-if="selectedProject" v-model="showDeleteDialog" max-width="600px">
+            <v-dialog v-if="selectedProject" v-model="showDeleteDialog" max-width="600px" @input="closeDeleteDialog">
                 <v-card>
                     <v-card-title class="headline">Do you really want to delete the project '{{selectedProject.title}}' ?</v-card-title>
+                    <v-card-text>
+                        <indicator :type="indicatorType.error" :message="deleteProjectError"></indicator>
+                    </v-card-text>
                     <v-card-actions>
                         <v-spacer></v-spacer>
                         <v-btn color="green darken-1"
@@ -92,7 +95,8 @@
                         </v-btn>
                         <v-btn color="green darken-1"
                                flat="flat"
-                               @click="submitDeletion">Delete
+                               @click="submitDeletion"
+                        >Delete
                         </v-btn>
                     </v-card-actions>
                 </v-card>
@@ -123,6 +127,7 @@
                                     </v-flex>
                                 </v-layout>
                             </v-container>
+                            <indicator :type="indicatorType.error" :message="editProjectError"></indicator>
                         </v-card-text>
                         <v-card-actions>
                             <v-spacer></v-spacer>
@@ -154,6 +159,8 @@ export default Vue.extend({
       showLoadingSpinner: true,
 
       createProjectError: '',
+      editProjectError: '',
+      deleteProjectError: '',
 
       selectedProject: null,
       valid: true,
@@ -170,21 +177,23 @@ export default Vue.extend({
     };
   },
   mounted () {
-    // TODO validate the result and show an error if the request was not successful
     this.$store.dispatch('getAllProjects')
         .then(() => this.showLoadingSpinner = false)
         .catch(() => this.showLoadingSpinner = false);
   },
   methods: {
     closeCreateDialog () {
+      this.clearErrorMessages();
       this.$refs.form.reset();
       this.showCreateDialog = false;
     },
     closeEditDialog () {
+      this.clearErrorMessages();
       this.$refs.form.reset();
       this.showEditDialog = false;
     },
     closeDeleteDialog () {
+      this.clearErrorMessages();
       this.showDeleteDialog = false;
     },
     openEditDialog (project) {
@@ -218,15 +227,21 @@ export default Vue.extend({
           description: this.selectedProject.description,
           active: true
         };
-          // TODO validate the result and show an error if the request was not successful
-        this.$store.dispatch('updateProject', project);
-        this.closeEditDialog();
+
+        this.$store.dispatch('updateProject', project)
+            .then(() => this.closeEditDialog())
+            .catch(error => this.editProjectError = error);
       }
     },
     submitDeletion () {
-      // TODO validate the result and show an error if the request was not successful
-      this.$store.dispatch('deleteProject', this.selectedProject.id);
-      this.closeDeleteDialog();
+      this.$store.dispatch('deleteProject', this.selectedProject.id)
+          .then(() => this.closeDeleteDialog())
+          .catch(error => this.deleteProjectError = error);
+    },
+    clearErrorMessages () {
+        this.createProjectError = '';
+        this.editProjectError = '';
+        this.deleteProjectError = '';
     }
   },
   computed: {
