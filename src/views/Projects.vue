@@ -77,6 +77,7 @@
                     </v-alert>
                 </div>
             </v-card>
+            <indicator :type="indicatorType.success" :message="successMessage"></indicator>
         </v-flex>
 
         <v-layout row justify-center>
@@ -158,6 +159,7 @@ export default Vue.extend({
       showEditDialog: false,
       showLoadingSpinner: true,
 
+      successMessage: '',
       createProjectError: '',
       editProjectError: '',
       deleteProjectError: '',
@@ -214,7 +216,10 @@ export default Vue.extend({
         };
 
         this.$store.dispatch('createProject', project)
-            .then(() => this.closeCreateDialog())
+            .then(() => {
+                this.closeCreateDialog();
+                this.successMessage = `Successfully created project ${project.title}`;
+            })
             .catch(error => this.createProjectError = error);
       }
     },
@@ -229,13 +234,19 @@ export default Vue.extend({
         };
 
         this.$store.dispatch('updateProject', project)
-            .then(() => this.closeEditDialog())
+            .then(() => {
+                this.closeEditDialog();
+                this.successMessage = `Successfully updated project ${project.title}`;
+            })
             .catch(error => this.editProjectError = error);
       }
     },
     submitDeletion () {
       this.$store.dispatch('deleteProject', this.selectedProject.id)
-          .then(() => this.closeDeleteDialog())
+          .then(() => {
+              this.closeDeleteDialog();
+              this.successMessage = `Successfully deleted project ${this.selectedProject.title}`;
+          })
           .catch(error => this.deleteProjectError = error);
     },
     clearErrorMessages () {
