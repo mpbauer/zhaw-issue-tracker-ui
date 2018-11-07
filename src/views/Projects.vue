@@ -30,6 +30,7 @@
                                         </v-flex>
                                     </v-layout>
                                 </v-container>
+                            <indicator :type="indicatorType.error" :show="createProjectError" :message="createProjectError"></indicator>
                             </v-card-text>
                             <v-card-actions>
                                 <v-spacer></v-spacer>
@@ -139,6 +140,8 @@
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
+import Indicator from './Indicator.vue';
+
 const uuidv1 = require('uuid/v1');
 
 export default Vue.extend({
@@ -149,6 +152,9 @@ export default Vue.extend({
       showDeleteDialog: false,
       showEditDialog: false,
       showLoadingSpinner: true,
+
+      createProjectError: '',
+
       selectedProject: null,
       valid: true,
       description: '',
@@ -197,9 +203,10 @@ export default Vue.extend({
           description: this.description,
           active: true
         };
-          // TODO validate the result and show an error if the request was not successful
-        this.$store.dispatch('createProject', project);
-        this.closeCreateDialog();
+
+        this.$store.dispatch('createProject', project)
+            .then(() => this.closeCreateDialog())
+            .catch(error => this.createProjectError = error);
       }
     },
     submitUpdate () {
@@ -224,6 +231,9 @@ export default Vue.extend({
   },
   computed: {
     ...mapGetters(['projects'])
+  },
+  components: {
+    Indicator
   }
 });
 </script>

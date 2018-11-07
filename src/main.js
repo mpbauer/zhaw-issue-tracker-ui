@@ -6,6 +6,7 @@ import App from './App.vue';
 import router from './router';
 import axios from 'axios';
 import store from './store';
+import {IndicatorType} from "./views/IndicatorType";
 
 Vue.use(Vuetify, {
   theme: {
@@ -25,6 +26,14 @@ Vue.config.productionTip = false;
 Vue.axios = Vue.prototype.$http = axios.create({
   baseURL: 'https://309bxpg45b.execute-api.eu-west-1.amazonaws.com/latest/api'
   // baseURL: 'http://localhost:3000/api'
+});
+
+Vue.mixin({
+    data: function () {
+      return {
+        get indicatorType() { return IndicatorType; }
+      }
+    }
 });
 
 new Vue({
