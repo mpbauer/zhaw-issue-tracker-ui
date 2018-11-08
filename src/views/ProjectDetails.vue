@@ -260,6 +260,7 @@
                                 </v-flex>
                             </v-layout>
                         </v-container>
+                        <indicator :type="indicatorType.error" :message="editIssueError"></indicator>
                     </v-card-text>
                     <v-card-actions>
                         <v-btn color="blue darken-1" flat @click="submitDeletion"><v-icon>delete</v-icon>Delete</v-btn>
@@ -375,8 +376,8 @@ export default Vue.extend({
         };
 
         this.$store.dispatch('createIssue', { projectId, issue })
-            .then(() => this.closeCreateDialog())
-            .catch(error => this.createIssueError = `Failed to create issue: ${error.response.status}`);
+          .then(() => this.closeCreateDialog())
+          .catch(error => this.createIssueError = `Failed to create issue: ${error.response.status}`);
       }
     },
     submitUpdate () {
@@ -393,17 +394,18 @@ export default Vue.extend({
           severity: this.selectedIssue.severity,
           status: this.selectedIssue.status
         };
-        // TODO validate the result and show an error if the request was not successful
-        this.$store.dispatch('updateIssue', { projectId, issue });
-        this.closeEditDialog();
+
+        this.$store.dispatch('updateIssue', { projectId, issue })
+          .then(() => this.closeEditDialog())
+          .catch(error => this.editIssueError = `Failed to edit issue: ${error.response.status}`);
       }
     },
     submitDeletion () {
-      // TODO validate the result and show an error if the request was not successful
       const projectId = this.selectedIssue.projectId;
       const issueId = this.selectedIssue.id;
-      this.$store.dispatch('deleteIssue', { projectId, issueId });
-      this.closeEditDialog();
+      this.$store.dispatch('deleteIssue', { projectId, issueId })
+        .then(() => this.closeEditDialog())
+        .catch(error => this.editIssueError = `Failed to delete issue: ${error.response.status}`);
     },
     clearErrorMessages () {
       this.createIssueError = '';
