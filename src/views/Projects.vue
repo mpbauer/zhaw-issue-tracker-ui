@@ -180,8 +180,8 @@ export default Vue.extend({
   },
   mounted () {
     this.$store.dispatch('getAllProjects')
-        .then(() => this.showLoadingSpinner = false)
-        .catch(() => this.showLoadingSpinner = false);
+      .then(() => this.showLoadingSpinner = false)
+      .catch(() => this.showLoadingSpinner = false);
   },
   methods: {
     closeCreateDialog () {
@@ -216,11 +216,11 @@ export default Vue.extend({
         };
 
         this.$store.dispatch('createProject', project)
-            .then(() => {
-                this.closeCreateDialog();
-                this.successMessage = `Successfully created project ${project.title}`;
-            })
-            .catch(error => this.createProjectError = error);
+          .then(() => {
+            this.closeCreateDialog();
+            this.successMessage = `Successfully created project ${project.title}`;
+          })
+          .catch(error => this.createProjectError = error);
       }
     },
     submitUpdate () {
@@ -234,25 +234,25 @@ export default Vue.extend({
         };
 
         this.$store.dispatch('updateProject', project)
-            .then(() => {
-                this.closeEditDialog();
-                this.successMessage = `Successfully updated project ${project.title}`;
-            })
-            .catch(error => this.editProjectError = error);
+          .then(() => {
+            this.closeEditDialog();
+            this.successMessage = `Successfully updated project ${project.title}`;
+          })
+          .catch(error => this.editProjectError = error);
       }
     },
     submitDeletion () {
       this.$store.dispatch('deleteProject', this.selectedProject.id)
           .then(() => {
-              this.closeDeleteDialog();
-              this.successMessage = `Successfully deleted project ${this.selectedProject.title}`;
+            this.closeDeleteDialog();
+            this.successMessage = `Successfully deleted project ${this.selectedProject.title}`;
           })
           .catch(error => this.deleteProjectError = error);
     },
     clearErrorMessages () {
-        this.createProjectError = '';
-        this.editProjectError = '';
-        this.deleteProjectError = '';
+      this.createProjectError = '';
+      this.editProjectError = '';
+      this.deleteProjectError = '';
     }
   },
   computed: {
