@@ -271,6 +271,7 @@
                 </v-card>
             </v-form>
         </v-dialog>
+        <indicator id="globalIssueIndicator" :type="globalIndicatorType" :message="globalMessage"></indicator>
     </v-container>
 </template>
 
@@ -280,6 +281,7 @@ import Vue from 'vue';
 const uuidv1 = require('uuid/v1');
 
 import Indicator from './Indicator.vue';
+import * as _ from './IndicatorType.js';
 
 export default Vue.extend({
   name: 'project-details',
@@ -288,6 +290,9 @@ export default Vue.extend({
       showCreateDialog: false,
       showEditDialog: false,
       showDeleteDialog: false,
+
+      globalMessage: '',
+      globalIndicatorType: _.IndicatorType.error,
 
       createIssueError: '',
       editIssueError: '',
@@ -320,13 +325,21 @@ export default Vue.extend({
     };
   },
   mounted () {
+    this.clearErrorMessages();
     const projectId = this.$route.params.projectId;
     if (!this.selectedProject) {
-      // TODO validate the result and show an error if the request was not successful
-      this.$store.dispatch('getProject', projectId);
+      this.$store.dispatch('getProject', projectId)
+        .catch(error => {
+          this.globalMessage = `Failed to get data for this project: ${error.response.status}`;
+          this.globalIndicatorType = _.IndicatorType.error;
+        });
     }
-    // TODO validate the result and show an error if the request was not successful
-    this.$store.dispatch('getIssues', projectId);
+
+    this.$store.dispatch('getIssues', projectId)
+      .catch(error => {
+        this.globalMessage = `Failed to get issues for this project: ${error.response.status}`;
+        this.globalIndicatorType = _.IndicatorType.error;
+      });
   },
   computed: {
     issues () {
@@ -358,8 +371,15 @@ export default Vue.extend({
     updateStatus (issue, status) {
       issue.status = status;
       const projectId = this.$route.params.projectId;
-      // TODO validate the result and show an error if the request was not successful
-      this.$store.dispatch('updateIssue', { projectId, issue });
+      this.$store.dispatch('updateIssue', { projectId, issue })
+        .then(() => {
+          this.globalMessage = `Successfully updated status for ${issue.title}`;
+          this.globalIndicatorType = _.IndicatorType.success;
+        })
+        .catch(error => {
+          this.globalMessage = `Failed to update status for issue: ${error.response.status}`;
+          this.globalIndicatorType = _.IndicatorType.error;
+        });
     },
     submitCreation () {
       if (this.$refs.form.validate()) {
@@ -376,7 +396,11 @@ export default Vue.extend({
         };
 
         this.$store.dispatch('createIssue', { projectId, issue })
-          .then(() => this.closeCreateDialog())
+          .then(() => {
+            this.closeCreateDialog();
+            this.globalMessage = `Successfully created ${issue.title}`;
+            this.globalIndicatorType = _.IndicatorType.success;
+          })
           .catch(error => this.createIssueError = `Failed to create issue: ${error.response.status}`);
       }
     },
@@ -396,7 +420,11 @@ export default Vue.extend({
         };
 
         this.$store.dispatch('updateIssue', { projectId, issue })
-          .then(() => this.closeEditDialog())
+          .then(() => {
+              this.closeEditDialog();
+              this.globalMessage = `Successfully edited ${issue.title}`;
+              this.globalIndicatorType = _.IndicatorType.success;
+          })
           .catch(error => this.editIssueError = `Failed to edit issue: ${error.response.status}`);
       }
     },
@@ -404,10 +432,15 @@ export default Vue.extend({
       const projectId = this.selectedIssue.projectId;
       const issueId = this.selectedIssue.id;
       this.$store.dispatch('deleteIssue', { projectId, issueId })
-        .then(() => this.closeEditDialog())
-        .catch(error => this.editIssueError = `Failed to delete issue: ${error.response.status}`);
+        .then(() => {
+            this.closeEditDialog();
+            this.globalMessage = `Successfully deleted ${this.selectedIssue.title}`;
+            this.globalIndicatorType = _.IndicatorType.success;
+        })
+        .catch(error => this.editIssueError = `Failed to delete issue: ${error.response.error}`);
     },
     clearErrorMessages () {
+      this.globalMessage = '';
       this.createIssueError = '';
       this.editIssueError = '';
     }
@@ -422,6 +455,11 @@ export default Vue.extend({
     #issue-header-panel {
         margin-bottom: 50px;
     }
+
+    #globalIssueIndicator {
+        margin-top: 50px;
+    }
+
     .issue-title-container{
         padding: 5px 5px 5px 5px;
     }
