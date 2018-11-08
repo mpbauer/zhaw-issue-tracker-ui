@@ -63,6 +63,7 @@
                                     </v-flex>
                                 </v-layout>
                             </v-container>
+                            <indicator :type="indicatorType.error" :message="createIssueError"></indicator>
                         </v-card-text>
                         <v-card-actions>
                             <v-spacer></v-spacer>
@@ -277,6 +278,8 @@
 import Vue from 'vue';
 const uuidv1 = require('uuid/v1');
 
+import Indicator from './Indicator.vue';
+
 export default Vue.extend({
   name: 'project-details',
   data () {
@@ -284,6 +287,13 @@ export default Vue.extend({
       showCreateDialog: false,
       showEditDialog: false,
       showDeleteDialog: false,
+
+      createIssueError: '',
+      editIssueError: '',
+
+      performingCreate: false,
+      performingEdit: false,
+
       selectedIssue: null,
       valid: true,
       selectedDueDate: null,
@@ -327,10 +337,12 @@ export default Vue.extend({
   },
   methods: {
     closeCreateDialog () {
+      this.clearErrorMessages();
       this.$refs.form.reset();
       this.showCreateDialog = false;
     },
     closeEditDialog () {
+      this.clearErrorMessages();
       this.$refs.form.reset();
       this.showEditDialog = false;
     },
@@ -361,9 +373,10 @@ export default Vue.extend({
           severity: this.selectedSeverity,
           status: 'todo'
         };
-        // TODO validate the result and show an error if the request was not successful
-        this.$store.dispatch('createIssue', { projectId, issue });
-        this.closeCreateDialog();
+
+        this.$store.dispatch('createIssue', { projectId, issue })
+            .then(() => this.closeCreateDialog())
+            .catch(error => this.createIssueError = `Failed to create issue: ${error.response.status}`);
       }
     },
     submitUpdate () {
@@ -391,7 +404,14 @@ export default Vue.extend({
       const issueId = this.selectedIssue.id;
       this.$store.dispatch('deleteIssue', { projectId, issueId });
       this.closeEditDialog();
+    },
+    clearErrorMessages () {
+      this.createIssueError = '';
+      this.editIssueError = '';
     }
+  },
+  components: {
+    Indicator
   }
 });
 </script>
