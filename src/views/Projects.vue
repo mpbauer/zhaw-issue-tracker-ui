@@ -235,7 +235,7 @@ export default Vue.extend({
             this.successMessage = `Successfully created project ${project.title}`;
           })
           .catch(error => {
-              this.createProjectError = error;
+              this.createProjectError = `Failed to create project: ${error.response.status}`;
               this.performingCreate = false;
           });
       }
@@ -257,7 +257,7 @@ export default Vue.extend({
             this.successMessage = `Successfully updated project ${project.title}`;
           })
           .catch(error => {
-              this.editProjectError = error;
+              this.editProjectError = `Failed to edit project: ${error.response.status}`;
               this.performingEdit = false;
           });
       }
@@ -270,7 +270,7 @@ export default Vue.extend({
             this.successMessage = `Successfully deleted project ${this.selectedProject.title}`;
           })
           .catch(error => {
-              this.deleteProjectError = error;
+              this.deleteProjectError = `Failed to delete project: ${error.response.status}`;
               this.performingDelete = false;
           });
     },
