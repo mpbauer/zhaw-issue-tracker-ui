@@ -34,8 +34,11 @@
                             </v-card-text>
                             <v-card-actions>
                                 <v-spacer></v-spacer>
-                                <v-btn color="blue darken-1" flat @click="closeCreateDialog">Close</v-btn>
-                                <v-btn color="blue darken-1" flat @click="submitCreation">Save</v-btn>
+                                <v-btn color="blue darken-1" flat @click="closeCreateDialog" :disabled="performingCreate">Close</v-btn>
+                                <v-btn color="blue darken-1" flat @click="submitCreation" :disabled="performingCreate">
+                                    <v-progress-circular class="inline-spinner" v-if="performingCreate" indeterminate color="primary"></v-progress-circular>
+                                    Save
+                                </v-btn>
                             </v-card-actions>
                         </v-card>
                     </v-form>
@@ -92,12 +95,15 @@
                         <v-btn color="green darken-1"
                                flat="flat"
                                @click="closeDeleteDialog"
+                               :disabled="performingDelete"
                         >Cancel
                         </v-btn>
                         <v-btn color="green darken-1"
                                flat="flat"
                                @click="submitDeletion"
-                        >Delete
+                               :disabled="performingDelete"
+                        ><v-progress-circular class="inline-spinner" v-if="performingDelete" indeterminate color="primary"></v-progress-circular>
+                            Delete
                         </v-btn>
                     </v-card-actions>
                 </v-card>
@@ -132,8 +138,11 @@
                         </v-card-text>
                         <v-card-actions>
                             <v-spacer></v-spacer>
-                            <v-btn color="blue darken-1" flat @click="closeEditDialog">Cancel</v-btn>
-                            <v-btn color="blue darken-1" flat @click="submitUpdate">Update</v-btn>
+                            <v-btn color="blue darken-1" flat @click="closeEditDialog" :disabled="performingEdit">Cancel</v-btn>
+                            <v-btn color="blue darken-1" flat @click="submitUpdate" :disabled="performingEdit">
+                                <v-progress-circular class="inline-spinner" v-if="performingEdit" indeterminate color="primary"></v-progress-circular>
+                                Update
+                            </v-btn>
                         </v-card-actions>
                     </v-card>
                 </v-form>
@@ -164,6 +173,10 @@ export default Vue.extend({
       editProjectError: '',
       deleteProjectError: '',
 
+      performingCreate: false,
+      performingEdit: false,
+      performingDelete: false,
+
       selectedProject: null,
       valid: true,
       description: '',
@@ -185,17 +198,17 @@ export default Vue.extend({
   },
   methods: {
     closeCreateDialog () {
-      this.clearErrorMessages();
+      this.clearAllDialogs();
       this.$refs.form.reset();
       this.showCreateDialog = false;
     },
     closeEditDialog () {
-      this.clearErrorMessages();
+      this.clearAllDialogs();
       this.$refs.form.reset();
       this.showEditDialog = false;
     },
     closeDeleteDialog () {
-      this.clearErrorMessages();
+      this.clearAllDialogs();
       this.showDeleteDialog = false;
     },
     openEditDialog (project) {
@@ -215,12 +228,16 @@ export default Vue.extend({
           active: true
         };
 
+        this.performingCreate = true;
         this.$store.dispatch('createProject', project)
           .then(() => {
             this.closeCreateDialog();
             this.successMessage = `Successfully created project ${project.title}`;
           })
-          .catch(error => this.createProjectError = error);
+          .catch(error => {
+              this.createProjectError = error;
+              this.performingCreate = false;
+          });
       }
     },
     submitUpdate () {
@@ -233,26 +250,38 @@ export default Vue.extend({
           active: true
         };
 
+        this.performingEdit = true;
         this.$store.dispatch('updateProject', project)
           .then(() => {
             this.closeEditDialog();
             this.successMessage = `Successfully updated project ${project.title}`;
           })
-          .catch(error => this.editProjectError = error);
+          .catch(error => {
+              this.editProjectError = error;
+              this.performingEdit = false;
+          });
       }
     },
     submitDeletion () {
+      this.performingDelete = true;
       this.$store.dispatch('deleteProject', this.selectedProject.id)
           .then(() => {
             this.closeDeleteDialog();
             this.successMessage = `Successfully deleted project ${this.selectedProject.title}`;
           })
-          .catch(error => this.deleteProjectError = error);
+          .catch(error => {
+              this.deleteProjectError = error;
+              this.performingDelete = false;
+          });
     },
-    clearErrorMessages () {
+    clearAllDialogs () {
       this.createProjectError = '';
       this.editProjectError = '';
       this.deleteProjectError = '';
+
+      this.performingCreate = false;
+      this.performingEdit = false;
+      this.performingDelete = false;
     }
   },
   computed: {
@@ -264,7 +293,11 @@ export default Vue.extend({
 });
 </script>
 <style>
-    .projects-card{
+    .projects-card {
         margin-top: 10px;
+    }
+
+    .inline-spinner {
+        margin-right: 1rem;
     }
 </style>
