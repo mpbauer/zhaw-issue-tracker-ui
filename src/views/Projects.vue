@@ -186,7 +186,10 @@ export default Vue.extend({
   mounted () {
     this.performingOperation = true;
     this.$store.dispatch('getAllProjects')
-      .then(() => this.performingOperation = false)
+      .then(() => {
+        this.performingOperation = false;
+        this.indicatorMessage = '';
+      })
       .catch(() => {
         this.performingOperation = false;
         this.indicatorType = IndicatorType.error;

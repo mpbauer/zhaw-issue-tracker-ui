@@ -63,7 +63,6 @@
                                     </v-flex>
                                 </v-layout>
                             </v-container>
-                            <indicator :type="indicatorType.error" :message="createIssueError"></indicator>
                         </v-card-text>
                         <v-card-actions>
                             <v-spacer></v-spacer>
@@ -260,7 +259,6 @@
                                 </v-flex>
                             </v-layout>
                         </v-container>
-                        <indicator :type="indicatorType.error" :message="editIssueError"></indicator>
                     </v-card-text>
                     <v-card-actions>
                         <v-btn color="blue darken-1" flat @click="submitDeletion"><v-icon>delete</v-icon>Delete</v-btn>
@@ -271,7 +269,14 @@
                 </v-card>
             </v-form>
         </v-dialog>
-        <indicator id="globalIssueIndicator" :type="globalIndicatorType" :message="globalMessage"></indicator>
+
+        <div id="issue-indicator" >
+            <v-layout v-if="performingOperation" row justify-center>
+                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            </v-layout>
+            <indicator v-else :type="indicatorType" :message="indicatorMessage"></indicator>
+        </div>
+
     </v-container>
 </template>
 
@@ -281,7 +286,8 @@ import Vue from 'vue';
 const uuidv1 = require('uuid/v1');
 
 import Indicator from './Indicator.vue';
-import * as _ from './IndicatorType.js';
+import { IndicatorType } from './IndicatorType.js';
+import { httpErrorToString } from './helpers.js';
 
 export default Vue.extend({
   name: 'project-details',
@@ -291,14 +297,9 @@ export default Vue.extend({
       showEditDialog: false,
       showDeleteDialog: false,
 
-      globalMessage: '',
-      globalIndicatorType: _.IndicatorType.error,
-
-      createIssueError: '',
-      editIssueError: '',
-
-      performingCreate: false,
-      performingEdit: false,
+      performingOperation: false,
+      indicatorMessage: '',
+      indicatorType: IndicatorType.error,
 
       selectedIssue: null,
       valid: true,
@@ -325,20 +326,30 @@ export default Vue.extend({
     };
   },
   mounted () {
-    this.clearErrorMessages();
+    this.performingOperation = true;
     const projectId = this.$route.params.projectId;
     if (!this.selectedProject) {
       this.$store.dispatch('getProject', projectId)
+        .then(() => {
+          this.performingOperation = false;
+          this.indicatorMessage = '';
+        })
         .catch(error => {
-          this.globalMessage = `Failed to get data for this project: ${error.response.status}`;
-          this.globalIndicatorType = _.IndicatorType.error;
+          this.performingOperation = false;
+          this.indicatorMessage = `Failed to get data for this project: ${httpErrorToString(error)}`;
+          this.indicatorType = IndicatorType.error;
         });
     }
 
     this.$store.dispatch('getIssues', projectId)
+      .then(() => {
+        this.performingOperation = false;
+        this.indicatorMessage = '';
+      })
       .catch(error => {
-        this.globalMessage = `Failed to get issues for this project: ${error.response.status}`;
-        this.globalIndicatorType = _.IndicatorType.error;
+        this.performingOperation = false;
+        this.indicatorMessage = `Failed to get issues for this project: ${httpErrorToString(error)}`;
+        this.indicatorType = IndicatorType.error;
       });
   },
   computed: {
@@ -351,12 +362,10 @@ export default Vue.extend({
   },
   methods: {
     closeCreateDialog () {
-      this.clearErrorMessages();
       this.$refs.form.reset();
       this.showCreateDialog = false;
     },
     closeEditDialog () {
-      this.clearErrorMessages();
       this.$refs.form.reset();
       this.showEditDialog = false;
     },
@@ -369,16 +378,19 @@ export default Vue.extend({
       this.selectedIssue = issue;
     },
     updateStatus (issue, status) {
+      this.performingOperation = true;
       issue.status = status;
       const projectId = this.$route.params.projectId;
       this.$store.dispatch('updateIssue', { projectId, issue })
         .then(() => {
-          this.globalMessage = `Successfully updated status for ${issue.title}`;
-          this.globalIndicatorType = _.IndicatorType.success;
+          this.performingOperation = false;
+          this.indicatorMessage = `Successfully updated status for ${issue.title}`;
+          this.indicatorType = IndicatorType.success;
         })
         .catch(error => {
-          this.globalMessage = `Failed to update status for issue: ${error.response.status}`;
-          this.globalIndicatorType = _.IndicatorType.error;
+          this.performingOperation = false;
+          this.indicatorMessage = `Failed to update status for issue: ${httpErrorToString(error)}`;
+          this.indicatorType = IndicatorType.error;
         });
     },
     submitCreation () {
@@ -395,13 +407,19 @@ export default Vue.extend({
           status: 'todo'
         };
 
+        this.performingOperation = true;
         this.$store.dispatch('createIssue', { projectId, issue })
           .then(() => {
-            this.closeCreateDialog();
-            this.globalMessage = `Successfully created ${issue.title}`;
-            this.globalIndicatorType = _.IndicatorType.success;
+            this.performingOperation = false;
+            this.indicatorMessage = `Successfully created ${issue.title}`;
+            this.indicatorType = IndicatorType.success;
           })
-          .catch(error => this.createIssueError = `Failed to create issue: ${error.response.status}`);
+          .catch(error => {
+            this.performingOperation = false;
+            this.indicatorMessage = `Failed to create issue: ${httpErrorToString(error)}`;
+            this.indicatorType = IndicatorType.error;
+          });
+        this.closeCreateDialog();
       }
     },
     submitUpdate () {
@@ -419,30 +437,37 @@ export default Vue.extend({
           status: this.selectedIssue.status
         };
 
+        this.performingOperation = true;
         this.$store.dispatch('updateIssue', { projectId, issue })
           .then(() => {
-              this.closeEditDialog();
-              this.globalMessage = `Successfully edited ${issue.title}`;
-              this.globalIndicatorType = _.IndicatorType.success;
+            this.performingOperation = false;
+            this.indicatorMessage = `Successfully edited ${issue.title}`;
+            this.indicatorType = IndicatorType.success;
           })
-          .catch(error => this.editIssueError = `Failed to edit issue: ${error.response.status}`);
+          .catch(error => {
+            this.performingOperation = false;
+            this.indicatorMessage = `Failed to edit issue: ${httpErrorToString(error)}`;
+            this.indicatorType = IndicatorType.error;
+          });
+          this.closeEditDialog();
       }
     },
     submitDeletion () {
       const projectId = this.selectedIssue.projectId;
       const issueId = this.selectedIssue.id;
+      this.performingOperation = true;
       this.$store.dispatch('deleteIssue', { projectId, issueId })
         .then(() => {
-            this.closeEditDialog();
-            this.globalMessage = `Successfully deleted ${this.selectedIssue.title}`;
-            this.globalIndicatorType = _.IndicatorType.success;
+          this.performingOperation = false;
+          this.indicatorMessage = `Successfully deleted ${this.selectedIssue.title}`;
+          this.indicatorType = IndicatorType.success;
         })
-        .catch(error => this.editIssueError = `Failed to delete issue: ${error.response.error}`);
-    },
-    clearErrorMessages () {
-      this.globalMessage = '';
-      this.createIssueError = '';
-      this.editIssueError = '';
+        .catch(error => {
+          this.performingOperation = false;
+          this.indicatorMessage = `Failed to delete issue: ${httpErrorToString(error)}`;
+          this.indicatorType = IndicatorType.error;
+        });
+        this.closeEditDialog();
     }
   },
   components: {
@@ -456,7 +481,7 @@ export default Vue.extend({
         margin-bottom: 50px;
     }
 
-    #globalIssueIndicator {
+    #issue-indicator {
         margin-top: 50px;
     }
 
