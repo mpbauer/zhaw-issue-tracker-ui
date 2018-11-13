@@ -6,7 +6,6 @@ import App from './App.vue';
 import router from './router';
 import axios from 'axios';
 import store from './store';
-import {IndicatorType} from "./views/IndicatorType";
 
 Vue.use(Vuetify, {
   theme: {

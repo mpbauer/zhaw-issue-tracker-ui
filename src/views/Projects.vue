@@ -93,13 +93,11 @@
                         <v-btn color="green darken-1"
                                flat="flat"
                                @click="closeDeleteDialog"
-                               :disabled="performingDelete"
                         >Cancel
                         </v-btn>
                         <v-btn color="green darken-1"
                                flat="flat"
                                @click="submitDeletion"
-                               :disabled="performingDelete"
                         >
                             Delete
                         </v-btn>
@@ -135,8 +133,8 @@
                         </v-card-text>
                         <v-card-actions>
                             <v-spacer></v-spacer>
-                            <v-btn color="blue darken-1" flat @click="closeEditDialog" :disabled="performingEdit">Cancel</v-btn>
-                            <v-btn color="blue darken-1" flat @click="submitUpdate" :disabled="performingEdit">
+                            <v-btn color="blue darken-1" flat @click="closeEditDialog">Cancel</v-btn>
+                            <v-btn color="blue darken-1" flat @click="submitUpdate">
                                 Update
                             </v-btn>
                         </v-card-actions>
@@ -150,6 +148,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
+import VueOfflineMixin from 'vue-offline/mixin';
 
 import Indicator from './Indicator.vue';
 import { IndicatorType } from './IndicatorType.js';
@@ -159,6 +158,7 @@ const uuidv1 = require('uuid/v1');
 
 export default Vue.extend({
   name: 'projects',
+  mixins: [VueOfflineMixin],
   data () {
     return {
       showCreateDialog: false,
@@ -191,6 +191,11 @@ export default Vue.extend({
         this.indicatorMessage = '';
       })
       .catch(error => this.handleError(error));
+  },
+  created () {
+    this.$on('online', function () {
+        this.indicatorMessage = '';
+    });
   },
   methods: {
     closeCreateDialog () {
@@ -255,7 +260,7 @@ export default Vue.extend({
     },
     submitDeletion () {
       this.performingOperation = true;
-      this.$store.dispatch('deleteProject', this.selectedProject.id)
+      this.$store.dispatch('deleteProject', this.selectedProject)
           .then(() => {
             this.indicatorType = IndicatorType.success;
             this.indicatorMessage = `Successfully deleted project ${this.selectedProject.title}`;

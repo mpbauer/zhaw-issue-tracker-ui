@@ -283,6 +283,8 @@
 <script lang="ts">
 /* eslint-disable no-array-constructor */
 import Vue from 'vue';
+import VueOfflineMixin from 'vue-offline/mixin';
+
 const uuidv1 = require('uuid/v1');
 
 import Indicator from './Indicator.vue';
@@ -291,6 +293,7 @@ import { httpErrorToErrorMessage, httpErrorToIndicatorType } from './helpers.js'
 
 export default Vue.extend({
   name: 'project-details',
+  mixins: [VueOfflineMixin],
   data () {
     return {
       showCreateDialog: false,
@@ -343,6 +346,11 @@ export default Vue.extend({
         this.indicatorMessage = '';
       })
       .catch(error => this.handleError(error));
+  },
+  created () {
+      this.$on('online', function () {
+       this.indicatorMessage = '';
+    });
   },
   computed: {
     issues () {
@@ -434,9 +442,9 @@ export default Vue.extend({
     },
     submitDeletion () {
       const projectId = this.selectedIssue.projectId;
-      const issueId = this.selectedIssue.id;
+      const issue = this.selectedIssue;
       this.performingOperation = true;
-      this.$store.dispatch('deleteIssue', { projectId, issueId })
+      this.$store.dispatch('deleteIssue', { projectId, issue })
         .then(() => {
           this.performingOperation = false;
           this.indicatorMessage = `Successfully deleted ${this.selectedIssue.title}`;
