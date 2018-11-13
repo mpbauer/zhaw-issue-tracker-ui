@@ -287,7 +287,7 @@ const uuidv1 = require('uuid/v1');
 
 import Indicator from './Indicator.vue';
 import { IndicatorType } from './IndicatorType.js';
-import { httpErrorToString } from './helpers.js';
+import { httpErrorToErrorMessage, httpErrorToIndicatorType } from './helpers.js';
 
 export default Vue.extend({
   name: 'project-details',
@@ -334,11 +334,7 @@ export default Vue.extend({
           this.performingOperation = false;
           this.indicatorMessage = '';
         })
-        .catch(error => {
-          this.performingOperation = false;
-          this.indicatorMessage = `Failed to get data for this project: ${httpErrorToString(error)}`;
-          this.indicatorType = IndicatorType.error;
-        });
+        .catch(error => this.handleError(error));
     }
 
     this.$store.dispatch('getIssues', projectId)
@@ -346,11 +342,7 @@ export default Vue.extend({
         this.performingOperation = false;
         this.indicatorMessage = '';
       })
-      .catch(error => {
-        this.performingOperation = false;
-        this.indicatorMessage = `Failed to get issues for this project: ${httpErrorToString(error)}`;
-        this.indicatorType = IndicatorType.error;
-      });
+      .catch(error => this.handleError(error));
   },
   computed: {
     issues () {
@@ -387,11 +379,7 @@ export default Vue.extend({
           this.indicatorMessage = `Successfully updated status for ${issue.title}`;
           this.indicatorType = IndicatorType.success;
         })
-        .catch(error => {
-          this.performingOperation = false;
-          this.indicatorMessage = `Failed to update status for issue: ${httpErrorToString(error)}`;
-          this.indicatorType = IndicatorType.error;
-        });
+        .catch(error => this.handleError(error));
     },
     submitCreation () {
       if (this.$refs.form.validate()) {
@@ -414,11 +402,7 @@ export default Vue.extend({
             this.indicatorMessage = `Successfully created ${issue.title}`;
             this.indicatorType = IndicatorType.success;
           })
-          .catch(error => {
-            this.performingOperation = false;
-            this.indicatorMessage = `Failed to create issue: ${httpErrorToString(error)}`;
-            this.indicatorType = IndicatorType.error;
-          });
+          .catch(error => this.handleError(error));
         this.closeCreateDialog();
       }
     },
@@ -444,11 +428,7 @@ export default Vue.extend({
             this.indicatorMessage = `Successfully edited ${issue.title}`;
             this.indicatorType = IndicatorType.success;
           })
-          .catch(error => {
-            this.performingOperation = false;
-            this.indicatorMessage = `Failed to edit issue: ${httpErrorToString(error)}`;
-            this.indicatorType = IndicatorType.error;
-          });
+          .catch(error => this.handleError(error));
           this.closeEditDialog();
       }
     },
@@ -462,12 +442,13 @@ export default Vue.extend({
           this.indicatorMessage = `Successfully deleted ${this.selectedIssue.title}`;
           this.indicatorType = IndicatorType.success;
         })
-        .catch(error => {
-          this.performingOperation = false;
-          this.indicatorMessage = `Failed to delete issue: ${httpErrorToString(error)}`;
-          this.indicatorType = IndicatorType.error;
-        });
+        .catch(error => this.handleError(error));
         this.closeEditDialog();
+    },
+    handleError (error) {
+      this.performingOperation = false;
+      this.indicatorMessage = httpErrorToErrorMessage(error);
+      this.indicatorType = httpErrorToIndicatorType(error);
     }
   },
   components: {

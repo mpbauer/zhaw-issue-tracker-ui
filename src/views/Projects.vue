@@ -153,7 +153,7 @@ import { mapGetters } from 'vuex';
 
 import Indicator from './Indicator.vue';
 import { IndicatorType } from './IndicatorType.js';
-import { httpErrorToString } from './helpers.js';
+import { httpErrorToErrorMessage, httpErrorToIndicatorType } from './helpers.js';
 
 const uuidv1 = require('uuid/v1');
 
@@ -190,11 +190,7 @@ export default Vue.extend({
         this.performingOperation = false;
         this.indicatorMessage = '';
       })
-      .catch(() => {
-        this.performingOperation = false;
-        this.indicatorType = IndicatorType.error;
-        this.indicatorMessage = "Failed to retrieve projects";
-      });
+      .catch(error => this.handleError(error));
   },
   methods: {
     closeCreateDialog () {
@@ -232,11 +228,7 @@ export default Vue.extend({
             this.indicatorMessage = `Successfully created project ${project.title}`;
             this.performingOperation = false;
           })
-          .catch(error => {
-            this.indicatorType = IndicatorType.error;
-            this.indicatorMessage = `Failed to create project: ${httpErrorToString(error)}`;
-            this.performingOperation = false;
-          });
+          .catch(error => this.handleError(error));
           this.closeCreateDialog();
       }
     },
@@ -257,11 +249,7 @@ export default Vue.extend({
             this.indicatorMessage = `Successfully updated project ${project.title}`;
             this.performingOperation = false;
           })
-          .catch(error => {
-            this.indicatorType = IndicatorType.error;
-            this.indicatorMessage = `Failed to edit project: ${httpErrorToString(error)}`;
-            this.performingOperation = false;
-          });
+          .catch(error => this.handleError(error));
           this.closeEditDialog();
       }
     },
@@ -273,12 +261,13 @@ export default Vue.extend({
             this.indicatorMessage = `Successfully deleted project ${this.selectedProject.title}`;
             this.performingOperation = false;
           })
-          .catch(error => {
-            this.indicatorType = IndicatorType.error;
-            this.indicatorMessage = `Failed to delete project: ${httpErrorToString(error)}`;
-            this.performingOperation = false;
-          });
+          .catch(error => this.handleError(error));
         this.closeDeleteDialog();
+    },
+    handleError (error) {
+      this.performingOperation = false;
+      this.indicatorMessage = httpErrorToErrorMessage(error);
+      this.indicatorType = httpErrorToIndicatorType(error);
     }
   },
   computed: {

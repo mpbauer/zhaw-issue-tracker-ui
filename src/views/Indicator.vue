@@ -26,6 +26,8 @@
         switch (this.type) {
           case IndicatorType.error:
             return "error";
+          case IndicatorType.warning:
+            return "warning";
           case IndicatorType.success:
             return "success";
         }
@@ -34,6 +36,8 @@
         switch (this.type) {
           case IndicatorType.error:
             return "warning";
+          case IndicatorType.warning:
+            return "priority_high";
           case IndicatorType.success:
             return "check_circle";
         }
