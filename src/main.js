@@ -28,14 +28,6 @@ Vue.axios = Vue.prototype.$http = axios.create({
   // baseURL: 'http://localhost:3000/api'
 });
 
-Vue.mixin({
-    data: function () {
-      return {
-        get indicatorType() { return IndicatorType; }
-      }
-    }
-});
-
 new Vue({
   router,
   render: (h) => h(App),

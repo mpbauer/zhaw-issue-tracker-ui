@@ -30,13 +30,11 @@
                                         </v-flex>
                                     </v-layout>
                                 </v-container>
-                            <indicator :type="indicatorType.error" :message="createProjectError"></indicator>
                             </v-card-text>
                             <v-card-actions>
                                 <v-spacer></v-spacer>
-                                <v-btn color="blue darken-1" flat @click="closeCreateDialog" :disabled="performingCreate">Close</v-btn>
-                                <v-btn color="blue darken-1" flat @click="submitCreation" :disabled="performingCreate">
-                                    <v-progress-circular class="inline-spinner" v-if="performingCreate" indeterminate color="primary"></v-progress-circular>
+                                <v-btn color="blue darken-1" flat @click="closeCreateDialog">Close</v-btn>
+                                <v-btn color="blue darken-1" flat @click="submitCreation">
                                     Save
                                 </v-btn>
                             </v-card-actions>
@@ -70,9 +68,7 @@
                     </v-list-tile>
                 </v-list>
             </v-card>
-            <v-layout v-else-if="showLoadingSpinner" row justify-center>
-                <v-progress-circular indeterminate color="primary"></v-progress-circular>
-            </v-layout>
+
             <v-card v-else class="projects-card">
                 <div>
                     <v-alert :value="true" type="info">
@@ -80,16 +76,18 @@
                     </v-alert>
                 </div>
             </v-card>
-            <indicator :type="indicatorType.success" :message="successMessage"></indicator>
+
+            <v-layout v-if="performingOperation" row justify-center>
+                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            </v-layout>
+            <indicator v-else :type="indicatorType" :message="indicatorMessage"></indicator>
+
         </v-flex>
 
         <v-layout row justify-center>
             <v-dialog v-if="selectedProject" v-model="showDeleteDialog" max-width="600px" @input="closeDeleteDialog">
                 <v-card>
                     <v-card-title class="headline">Do you really want to delete the project '{{selectedProject.title}}' ?</v-card-title>
-                    <v-card-text>
-                        <indicator :type="indicatorType.error" :message="deleteProjectError"></indicator>
-                    </v-card-text>
                     <v-card-actions>
                         <v-spacer></v-spacer>
                         <v-btn color="green darken-1"
@@ -102,7 +100,7 @@
                                flat="flat"
                                @click="submitDeletion"
                                :disabled="performingDelete"
-                        ><v-progress-circular class="inline-spinner" v-if="performingDelete" indeterminate color="primary"></v-progress-circular>
+                        >
                             Delete
                         </v-btn>
                     </v-card-actions>
@@ -134,13 +132,11 @@
                                     </v-flex>
                                 </v-layout>
                             </v-container>
-                            <indicator :type="indicatorType.error" :message="editProjectError"></indicator>
                         </v-card-text>
                         <v-card-actions>
                             <v-spacer></v-spacer>
                             <v-btn color="blue darken-1" flat @click="closeEditDialog" :disabled="performingEdit">Cancel</v-btn>
                             <v-btn color="blue darken-1" flat @click="submitUpdate" :disabled="performingEdit">
-                                <v-progress-circular class="inline-spinner" v-if="performingEdit" indeterminate color="primary"></v-progress-circular>
                                 Update
                             </v-btn>
                         </v-card-actions>
@@ -156,6 +152,8 @@ import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
 import Indicator from './Indicator.vue';
+import { IndicatorType } from './IndicatorType.js';
+import { httpErrorToString } from './helpers.js';
 
 const uuidv1 = require('uuid/v1');
 
@@ -166,16 +164,10 @@ export default Vue.extend({
       showCreateDialog: false,
       showDeleteDialog: false,
       showEditDialog: false,
-      showLoadingSpinner: true,
 
-      successMessage: '',
-      createProjectError: '',
-      editProjectError: '',
-      deleteProjectError: '',
-
-      performingCreate: false,
-      performingEdit: false,
-      performingDelete: false,
+      performingOperation: false,
+      indicatorType: IndicatorType.error,
+      indicatorMessage: '',
 
       selectedProject: null,
       valid: true,
@@ -192,23 +184,25 @@ export default Vue.extend({
     };
   },
   mounted () {
+    this.performingOperation = true;
     this.$store.dispatch('getAllProjects')
-      .then(() => this.showLoadingSpinner = false)
-      .catch(() => this.showLoadingSpinner = false);
+      .then(() => this.performingOperation = false)
+      .catch(() => {
+        this.performingOperation = false;
+        this.indicatorType = IndicatorType.error;
+        this.indicatorMessage = "Failed to retrieve projects";
+      });
   },
   methods: {
     closeCreateDialog () {
-      this.clearAllDialogs();
       this.$refs.form.reset();
       this.showCreateDialog = false;
     },
     closeEditDialog () {
-      this.clearAllDialogs();
       this.$refs.form.reset();
       this.showEditDialog = false;
     },
     closeDeleteDialog () {
-      this.clearAllDialogs();
       this.showDeleteDialog = false;
     },
     openEditDialog (project) {
@@ -228,16 +222,19 @@ export default Vue.extend({
           active: true
         };
 
-        this.performingCreate = true;
+        this.performingOperation = true;
         this.$store.dispatch('createProject', project)
           .then(() => {
-            this.closeCreateDialog();
-            this.successMessage = `Successfully created project ${project.title}`;
+            this.indicatorType = IndicatorType.success;
+            this.indicatorMessage = `Successfully created project ${project.title}`;
+            this.performingOperation = false;
           })
           .catch(error => {
-              this.createProjectError = `Failed to create project: ${error.response.status}`;
-              this.performingCreate = false;
+            this.indicatorType = IndicatorType.error;
+            this.indicatorMessage = `Failed to create project: ${httpErrorToString(error)}`;
+            this.performingOperation = false;
           });
+          this.closeCreateDialog();
       }
     },
     submitUpdate () {
@@ -250,38 +247,35 @@ export default Vue.extend({
           active: true
         };
 
-        this.performingEdit = true;
+        this.performingOperation = true;
         this.$store.dispatch('updateProject', project)
           .then(() => {
-            this.closeEditDialog();
-            this.successMessage = `Successfully updated project ${project.title}`;
+            this.indicatorType = IndicatorType.success;
+            this.indicatorMessage = `Successfully updated project ${project.title}`;
+            this.performingOperation = false;
           })
           .catch(error => {
-              this.editProjectError = `Failed to edit project: ${error.response.status}`;
-              this.performingEdit = false;
+            this.indicatorType = IndicatorType.error;
+            this.indicatorMessage = `Failed to edit project: ${httpErrorToString(error)}`;
+            this.performingOperation = false;
           });
+          this.closeEditDialog();
       }
     },
     submitDeletion () {
-      this.performingDelete = true;
+      this.performingOperation = true;
       this.$store.dispatch('deleteProject', this.selectedProject.id)
           .then(() => {
-            this.closeDeleteDialog();
-            this.successMessage = `Successfully deleted project ${this.selectedProject.title}`;
+            this.indicatorType = IndicatorType.success;
+            this.indicatorMessage = `Successfully deleted project ${this.selectedProject.title}`;
+            this.performingOperation = false;
           })
           .catch(error => {
-              this.deleteProjectError = `Failed to delete project: ${error.response.status}`;
-              this.performingDelete = false;
+            this.indicatorType = IndicatorType.error;
+            this.indicatorMessage = `Failed to delete project: ${httpErrorToString(error)}`;
+            this.performingOperation = false;
           });
-    },
-    clearAllDialogs () {
-      this.createProjectError = '';
-      this.editProjectError = '';
-      this.deleteProjectError = '';
-
-      this.performingCreate = false;
-      this.performingEdit = false;
-      this.performingDelete = false;
+        this.closeDeleteDialog();
     }
   },
   computed: {
@@ -295,9 +289,5 @@ export default Vue.extend({
 <style>
     .projects-card {
         margin-top: 10px;
-    }
-
-    .inline-spinner {
-        margin-right: 1rem;
     }
 </style>
