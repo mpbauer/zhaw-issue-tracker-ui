@@ -285,11 +285,11 @@
 import Vue from 'vue';
 import VueOfflineMixin from 'vue-offline/mixin';
 
-const uuidv1 = require('uuid/v1');
-
 import Indicator from './Indicator.vue';
 import { IndicatorType } from './IndicatorType.js';
 import { httpErrorToErrorMessage, httpErrorToIndicatorType } from './helpers.js';
+
+const uuidv1 = require('uuid/v1');
 
 export default Vue.extend({
   name: 'project-details',
@@ -348,8 +348,8 @@ export default Vue.extend({
       .catch(error => this.handleError(error));
   },
   created () {
-      this.$on('online', function () {
-       this.indicatorMessage = '';
+    this.$on('online', function () {
+      this.indicatorMessage = '';
     });
   },
   computed: {
@@ -437,7 +437,7 @@ export default Vue.extend({
             this.indicatorType = IndicatorType.success;
           })
           .catch(error => this.handleError(error));
-          this.closeEditDialog();
+        this.closeEditDialog();
       }
     },
     submitDeletion () {
@@ -451,7 +451,7 @@ export default Vue.extend({
           this.indicatorType = IndicatorType.success;
         })
         .catch(error => this.handleError(error));
-        this.closeEditDialog();
+      this.closeEditDialog();
     },
     handleError (error) {
       this.performingOperation = false;

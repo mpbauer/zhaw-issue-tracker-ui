@@ -1,16 +1,16 @@
 import Vue from 'vue';
-import { isNullOrUndefined } from "../../views/helpers";
+import { isNullOrUndefined } from '../../views/helpers';
 
 const operation = { create: 1, update: 2, delete: 3 };
 
-function updateSyncState(obj, operation, isSynced) {
+function updateSyncState (obj, operation, isSynced) {
   obj.syncState = {
     operation: operation,
     synced: isSynced
   };
 }
 
-function setProjectSyncState(context, project, op, isSynced) {
+function setProjectSyncState (context, project, op, isSynced) {
   context.commit('setSyncState', {
     targetState: 'projects',
     operation: op,
@@ -19,7 +19,7 @@ function setProjectSyncState(context, project, op, isSynced) {
   });
 }
 
-function setIssueSyncState(context, projectId, issue, op, isSynced) {
+function setIssueSyncState (context, projectId, issue, op, isSynced) {
   context.commit('setSyncState', {
     targetState: 'issues',
     operation: op,
@@ -28,7 +28,7 @@ function setIssueSyncState(context, projectId, issue, op, isSynced) {
   });
 }
 
-function isScheduledForDeletion(obj) {
+function isScheduledForDeletion (obj) {
   return !isNullOrUndefined(obj.syncState) && obj.syncState.operation === operation.delete;
 }
 
@@ -59,12 +59,13 @@ export default {
   },
   mutations: {
     updateProjects (state, projects) {
-      if(!state.projects) state.projects = [];
+      if (!state.projects) state.projects = [];
       // merge project objects (1 from the server 1 from localStorage)
       projects.forEach(project => {
         const localProject = state.projects.find(entry => entry.id === project.id || entry.clientId === project.clientId);
         if (!isNullOrUndefined(localProject)) {
           const localKeys = Object.keys(localProject);
+          // eslint-disable-next-line no-return-assign
           localKeys.forEach(key => project[key] = localProject[key]);
         }
       });
@@ -90,18 +91,19 @@ export default {
       }
     },
     updateIssues (state, { projectId, issues }) {
-      if(!state.issues) state.issues = {};
+      if (!state.issues) state.issues = {};
       // merge project objects (1 from the server 1 from localStorage)
       const localIssuesOfProject = state.issues[projectId];
       const issuesOfProject = issues;
       if (!isNullOrUndefined(issuesOfProject) && !isNullOrUndefined(localIssuesOfProject)) {
-        for(let i = 0; i < issuesOfProject.length; i++) {
+        for (let i = 0; i < issuesOfProject.length; i++) {
           const issue = issuesOfProject[i];
           const localIssue = localIssuesOfProject.find(entry => entry.id === issue.id || entry.clientId === issue.clientId);
-          if(!isNullOrUndefined(localIssue)) {
+          if (!isNullOrUndefined(localIssue)) {
             const hasLocalChanges = !isNullOrUndefined(localIssue.syncState) && !localIssue.syncState.synced;
             if (!hasLocalChanges) {
               const keys = Object.keys(localIssue);
+              // eslint-disable-next-line no-return-assign
               keys.forEach(key => localIssue[key] = issue[key]);
             }
             issuesOfProject[i] = localIssue;
@@ -261,7 +263,7 @@ export default {
       projects.forEach(project => {
         const needsSync = !isNullOrUndefined(project.syncState) && !project.syncState.synced;
         if (!needsSync) return;
-        let promise = undefined;
+        let promise;
         switch (project.syncState.operation) {
           case operation.create:
             // update is correct, we don't want to add it twice
@@ -281,10 +283,10 @@ export default {
       const projectIds = Object.keys(issues);
       for (const projectId of projectIds) {
         const issuesOfProject = issues[projectId];
-        for(const issue of issuesOfProject) {
+        for (const issue of issuesOfProject) {
           const needsSync = !isNullOrUndefined(issue.syncState) && !issue.syncState.synced;
           if (!needsSync) continue;
-          let promise = undefined;
+          let promise;
           switch (issue.syncState.operation) {
             case operation.create:
               // update is correct, we don't want to add it twice

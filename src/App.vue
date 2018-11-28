@@ -95,7 +95,7 @@
 
 <script>
 import VueOfflineMixin from 'vue-offline/mixin';
-import {isNullOrUndefined} from "./views/helpers";
+import { isNullOrUndefined } from './views/helpers';
 
 export default {
   mixins: [VueOfflineMixin],
@@ -153,7 +153,7 @@ export default {
     syncWithServer () {
       this.$store.dispatch('syncWithServer')
         .then(result => {
-          if(!isNullOrUndefined(result.noElements) && result.noElements) return;
+          if (!isNullOrUndefined(result.noElements) && result.noElements) return;
 
           this.syncSnackbar.color = 'primary';
           this.syncSnackbar.snackbar = true;

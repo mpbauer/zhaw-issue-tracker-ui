@@ -194,7 +194,7 @@ export default Vue.extend({
   },
   created () {
     this.$on('online', function () {
-        this.indicatorMessage = '';
+      this.indicatorMessage = '';
     });
   },
   methods: {
@@ -234,7 +234,7 @@ export default Vue.extend({
             this.performingOperation = false;
           })
           .catch(error => this.handleError(error));
-          this.closeCreateDialog();
+        this.closeCreateDialog();
       }
     },
     submitUpdate () {
@@ -255,19 +255,19 @@ export default Vue.extend({
             this.performingOperation = false;
           })
           .catch(error => this.handleError(error));
-          this.closeEditDialog();
+        this.closeEditDialog();
       }
     },
     submitDeletion () {
       this.performingOperation = true;
       this.$store.dispatch('deleteProject', this.selectedProject)
-          .then(() => {
-            this.indicatorType = IndicatorType.success;
-            this.indicatorMessage = `Successfully deleted project ${this.selectedProject.title}`;
-            this.performingOperation = false;
-          })
-          .catch(error => this.handleError(error));
-        this.closeDeleteDialog();
+        .then(() => {
+          this.indicatorType = IndicatorType.success;
+          this.indicatorMessage = `Successfully deleted project ${this.selectedProject.title}`;
+          this.performingOperation = false;
+        })
+        .catch(error => this.handleError(error));
+      this.closeDeleteDialog();
     },
     handleError (error) {
       this.performingOperation = false;
