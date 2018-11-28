@@ -1,5 +1,21 @@
-# zhaw-issue-tracker-ui
+# ZHAW Issue Tracker UI
 
+## Build with Docker
+You can build this project by executing the following command without the need to install NPM:
+````
+docker build -t zhaw-issue-tracker-ui .
+````
+## Run with Docker
+
+You can run the Docker image by executing the following command:
+```
+docker run -d -p 80:80 --name zhaw-issue-tracker-server-ui --restart always zhaw-issue-tracker-ui
+```
+
+## Project URL:
+The project can be tested with the following URL:
+
+http://zhaw-issue-tracker.mpbauer.com
 ## Project setup
 ```
 npm install
