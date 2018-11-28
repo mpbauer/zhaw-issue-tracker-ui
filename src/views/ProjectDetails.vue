@@ -269,21 +269,41 @@
                 </v-card>
             </v-form>
         </v-dialog>
+
+        <div id="issue-indicator" >
+            <v-layout v-if="performingOperation" row justify-center>
+                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            </v-layout>
+            <indicator v-else :type="indicatorType" :message="indicatorMessage"></indicator>
+        </div>
+
     </v-container>
 </template>
 
 <script lang="ts">
 /* eslint-disable no-array-constructor */
 import Vue from 'vue';
+import VueOfflineMixin from 'vue-offline/mixin';
+
 const uuidv1 = require('uuid/v1');
+
+import Indicator from './Indicator.vue';
+import { IndicatorType } from './IndicatorType.js';
+import { httpErrorToErrorMessage, httpErrorToIndicatorType } from './helpers.js';
 
 export default Vue.extend({
   name: 'project-details',
+  mixins: [VueOfflineMixin],
   data () {
     return {
       showCreateDialog: false,
       showEditDialog: false,
       showDeleteDialog: false,
+
+      performingOperation: false,
+      indicatorMessage: '',
+      indicatorType: IndicatorType.error,
+
       selectedIssue: null,
       valid: true,
       selectedDueDate: null,
@@ -309,13 +329,28 @@ export default Vue.extend({
     };
   },
   mounted () {
+    this.performingOperation = true;
     const projectId = this.$route.params.projectId;
     if (!this.selectedProject) {
-      // TODO validate the result and show an error if the request was not successful
-      this.$store.dispatch('getProject', projectId);
+      this.$store.dispatch('getProject', projectId)
+        .then(() => {
+          this.performingOperation = false;
+          this.indicatorMessage = '';
+        })
+        .catch(error => this.handleError(error));
     }
-    // TODO validate the result and show an error if the request was not successful
-    this.$store.dispatch('getIssues', projectId);
+
+    this.$store.dispatch('getIssues', projectId)
+      .then(() => {
+        this.performingOperation = false;
+        this.indicatorMessage = '';
+      })
+      .catch(error => this.handleError(error));
+  },
+  created () {
+      this.$on('online', function () {
+       this.indicatorMessage = '';
+    });
   },
   computed: {
     issues () {
@@ -343,10 +378,16 @@ export default Vue.extend({
       this.selectedIssue = issue;
     },
     updateStatus (issue, status) {
+      this.performingOperation = true;
       issue.status = status;
       const projectId = this.$route.params.projectId;
-      // TODO validate the result and show an error if the request was not successful
-      this.$store.dispatch('updateIssue', { projectId, issue });
+      this.$store.dispatch('updateIssue', { projectId, issue })
+        .then(() => {
+          this.performingOperation = false;
+          this.indicatorMessage = `Successfully updated status for ${issue.title}`;
+          this.indicatorType = IndicatorType.success;
+        })
+        .catch(error => this.handleError(error));
     },
     submitCreation () {
       if (this.$refs.form.validate()) {
@@ -361,8 +402,15 @@ export default Vue.extend({
           severity: this.selectedSeverity,
           status: 'todo'
         };
-        // TODO validate the result and show an error if the request was not successful
-        this.$store.dispatch('createIssue', { projectId, issue });
+
+        this.performingOperation = true;
+        this.$store.dispatch('createIssue', { projectId, issue })
+          .then(() => {
+            this.performingOperation = false;
+            this.indicatorMessage = `Successfully created ${issue.title}`;
+            this.indicatorType = IndicatorType.success;
+          })
+          .catch(error => this.handleError(error));
         this.closeCreateDialog();
       }
     },
@@ -380,18 +428,39 @@ export default Vue.extend({
           severity: this.selectedIssue.severity,
           status: this.selectedIssue.status
         };
-        // TODO validate the result and show an error if the request was not successful
-        this.$store.dispatch('updateIssue', { projectId, issue });
-        this.closeEditDialog();
+
+        this.performingOperation = true;
+        this.$store.dispatch('updateIssue', { projectId, issue })
+          .then(() => {
+            this.performingOperation = false;
+            this.indicatorMessage = `Successfully edited ${issue.title}`;
+            this.indicatorType = IndicatorType.success;
+          })
+          .catch(error => this.handleError(error));
+          this.closeEditDialog();
       }
     },
     submitDeletion () {
-      // TODO validate the result and show an error if the request was not successful
       const projectId = this.selectedIssue.projectId;
-      const issueId = this.selectedIssue.id;
-      this.$store.dispatch('deleteIssue', { projectId, issueId });
-      this.closeEditDialog();
+      const issue = this.selectedIssue;
+      this.performingOperation = true;
+      this.$store.dispatch('deleteIssue', { projectId, issue })
+        .then(() => {
+          this.performingOperation = false;
+          this.indicatorMessage = `Successfully deleted ${this.selectedIssue.title}`;
+          this.indicatorType = IndicatorType.success;
+        })
+        .catch(error => this.handleError(error));
+        this.closeEditDialog();
+    },
+    handleError (error) {
+      this.performingOperation = false;
+      this.indicatorMessage = httpErrorToErrorMessage(error);
+      this.indicatorType = httpErrorToIndicatorType(error);
     }
+  },
+  components: {
+    Indicator
   }
 });
 </script>
@@ -400,6 +469,11 @@ export default Vue.extend({
     #issue-header-panel {
         margin-bottom: 50px;
     }
+
+    #issue-indicator {
+        margin-top: 50px;
+    }
+
     .issue-title-container{
         padding: 5px 5px 5px 5px;
     }

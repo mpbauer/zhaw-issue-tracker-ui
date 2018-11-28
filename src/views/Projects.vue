@@ -34,7 +34,9 @@
                             <v-card-actions>
                                 <v-spacer></v-spacer>
                                 <v-btn color="blue darken-1" flat @click="closeCreateDialog">Close</v-btn>
-                                <v-btn color="blue darken-1" flat @click="submitCreation">Save</v-btn>
+                                <v-btn color="blue darken-1" flat @click="submitCreation">
+                                    Save
+                                </v-btn>
                             </v-card-actions>
                         </v-card>
                     </v-form>
@@ -66,6 +68,7 @@
                     </v-list-tile>
                 </v-list>
             </v-card>
+
             <v-card v-else class="projects-card">
                 <div>
                     <v-alert :value="true" type="info">
@@ -73,10 +76,16 @@
                     </v-alert>
                 </div>
             </v-card>
+
+            <v-layout v-if="performingOperation" row justify-center>
+                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            </v-layout>
+            <indicator v-else :type="indicatorType" :message="indicatorMessage"></indicator>
+
         </v-flex>
 
         <v-layout row justify-center>
-            <v-dialog v-if="selectedProject" v-model="showDeleteDialog" max-width="600px">
+            <v-dialog v-if="selectedProject" v-model="showDeleteDialog" max-width="600px" @input="closeDeleteDialog">
                 <v-card>
                     <v-card-title class="headline">Do you really want to delete the project '{{selectedProject.title}}' ?</v-card-title>
                     <v-card-actions>
@@ -88,7 +97,9 @@
                         </v-btn>
                         <v-btn color="green darken-1"
                                flat="flat"
-                               @click="submitDeletion">Delete
+                               @click="submitDeletion"
+                        >
+                            Delete
                         </v-btn>
                     </v-card-actions>
                 </v-card>
@@ -123,7 +134,9 @@
                         <v-card-actions>
                             <v-spacer></v-spacer>
                             <v-btn color="blue darken-1" flat @click="closeEditDialog">Cancel</v-btn>
-                            <v-btn color="blue darken-1" flat @click="submitUpdate">Update</v-btn>
+                            <v-btn color="blue darken-1" flat @click="submitUpdate">
+                                Update
+                            </v-btn>
                         </v-card-actions>
                     </v-card>
                 </v-form>
@@ -135,16 +148,27 @@
 <script lang="ts">
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
+import VueOfflineMixin from 'vue-offline/mixin';
+
+import Indicator from './Indicator.vue';
+import { IndicatorType } from './IndicatorType.js';
+import { httpErrorToErrorMessage, httpErrorToIndicatorType } from './helpers.js';
 
 const uuidv1 = require('uuid/v1');
 
 export default Vue.extend({
   name: 'projects',
+  mixins: [VueOfflineMixin],
   data () {
     return {
       showCreateDialog: false,
       showDeleteDialog: false,
       showEditDialog: false,
+
+      performingOperation: false,
+      indicatorType: IndicatorType.error,
+      indicatorMessage: '',
+
       selectedProject: null,
       valid: true,
       description: '',
@@ -160,8 +184,18 @@ export default Vue.extend({
     };
   },
   mounted () {
-    // TODO validate the result and show an error if the request was not successful
-    this.$store.dispatch('getAllProjects');
+    this.performingOperation = true;
+    this.$store.dispatch('getAllProjects')
+      .then(() => {
+        this.performingOperation = false;
+        this.indicatorMessage = '';
+      })
+      .catch(error => this.handleError(error));
+  },
+  created () {
+    this.$on('online', function () {
+        this.indicatorMessage = '';
+    });
   },
   methods: {
     closeCreateDialog () {
@@ -191,9 +225,16 @@ export default Vue.extend({
           description: this.description,
           active: true
         };
-          // TODO validate the result and show an error if the request was not successful
-        this.$store.dispatch('createProject', project);
-        this.closeCreateDialog();
+
+        this.performingOperation = true;
+        this.$store.dispatch('createProject', project)
+          .then(() => {
+            this.indicatorType = IndicatorType.success;
+            this.indicatorMessage = `Successfully created project ${project.title}`;
+            this.performingOperation = false;
+          })
+          .catch(error => this.handleError(error));
+          this.closeCreateDialog();
       }
     },
     submitUpdate () {
@@ -205,24 +246,45 @@ export default Vue.extend({
           description: this.selectedProject.description,
           active: true
         };
-          // TODO validate the result and show an error if the request was not successful
-        this.$store.dispatch('updateProject', project);
-        this.closeEditDialog();
+
+        this.performingOperation = true;
+        this.$store.dispatch('updateProject', project)
+          .then(() => {
+            this.indicatorType = IndicatorType.success;
+            this.indicatorMessage = `Successfully updated project ${project.title}`;
+            this.performingOperation = false;
+          })
+          .catch(error => this.handleError(error));
+          this.closeEditDialog();
       }
     },
     submitDeletion () {
-      // TODO validate the result and show an error if the request was not successful
-      this.$store.dispatch('deleteProject', this.selectedProject.id);
-      this.closeDeleteDialog();
+      this.performingOperation = true;
+      this.$store.dispatch('deleteProject', this.selectedProject)
+          .then(() => {
+            this.indicatorType = IndicatorType.success;
+            this.indicatorMessage = `Successfully deleted project ${this.selectedProject.title}`;
+            this.performingOperation = false;
+          })
+          .catch(error => this.handleError(error));
+        this.closeDeleteDialog();
+    },
+    handleError (error) {
+      this.performingOperation = false;
+      this.indicatorMessage = httpErrorToErrorMessage(error);
+      this.indicatorType = httpErrorToIndicatorType(error);
     }
   },
   computed: {
     ...mapGetters(['projects'])
+  },
+  components: {
+    Indicator
   }
 });
 </script>
 <style>
-    .projects-card{
+    .projects-card {
         margin-top: 10px;
     }
 </style>

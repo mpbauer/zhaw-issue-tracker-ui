@@ -83,11 +83,19 @@
                 <v-btn dark flat @click="snackbar = false">Close</v-btn>
             </v-snackbar>
         </div>
+
+        <v-snackbar v-model="syncSnackbar.snackbar"
+                    :color="syncSnackbar.color"
+                    :timeout="syncSnackbar.timeout">
+            {{ syncSnackbar.text }}
+            <v-btn dark flat @click="syncSnackbar.snackbar = false">Close</v-btn>
+        </v-snackbar>
     </v-app>
 </template>
 
 <script>
 import VueOfflineMixin from 'vue-offline/mixin';
+import {isNullOrUndefined} from "./views/helpers";
 
 export default {
   mixins: [VueOfflineMixin],
@@ -111,14 +119,25 @@ export default {
       mode: 'multi-line',
       timeout: 6000,
       text: 'Oops, it seems that you are currently offline!',
-      reconnectText: 'Seems like you are online again, welcome back!'
+      reconnectText: 'Seems like you are online again, welcome back!',
+
+      syncSnackbar: {
+        snackbar: false,
+        color: 'primary',
+        timeout: 6000,
+        text: 'sync sync sync'
+      }
     };
+  },
+  mounted () {
+    this.syncWithServer();
   },
   props: {
     source: String
   },
   created () {
     this.$on('online', function () {
+      this.syncWithServer();
       console.log('$on(online) method invoked');
       this.snackbar = true;
       this.onlineState = "I'm online now!";
@@ -129,6 +148,24 @@ export default {
       this.snackbar = true;
       this.onlineState = "I'm offline now!";
     });
+  },
+  methods: {
+    syncWithServer () {
+      this.$store.dispatch('syncWithServer')
+        .then(result => {
+          if(!isNullOrUndefined(result.noElements) && result.noElements) return;
+
+          this.syncSnackbar.color = 'primary';
+          this.syncSnackbar.snackbar = true;
+          this.syncSnackbar.text = 'Successfully synced with server.';
+        })
+        .catch(error => {
+          console.error(error);
+          this.syncSnackbar.color = 'error';
+          this.syncSnackbar.snackbar = true;
+          this.syncSnackbar.text = 'Failed to sync with server.';
+        });
+    }
   }
 };
 </script>
